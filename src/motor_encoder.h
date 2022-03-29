@@ -30,6 +30,7 @@ public:
     float get_angle_deg();
     float get_angle_rad();
     float get_motor_angle_deg();
+    double get_motor_angle_rad();
     float get_angle_filtered_deg();
     void set_zero_angle_deg(float zero_angle);
 
@@ -37,6 +38,8 @@ public:
     int32_t n_transmission = 1;
 
     IIRFilter<M_POS_FILTER_ORDER> pos_input_filter_m;
+    uint32_t _current_angle_raw = 0;
+    uint32_t _previous_angle_raw = 0;
 
 
 private:
@@ -52,8 +55,6 @@ private:
 
     int32_t _upper_rollover_detect_limit = 10000;
     int32_t _lower_rollover_detect_limit = 5000;
-    int16_t _previous_angle_raw = 0;
-    int16_t _current_angle_raw = 0;
 
     portMUX_TYPE pos_input_data_spinLock;
     SemaphoreHandle_t spi_mutex;

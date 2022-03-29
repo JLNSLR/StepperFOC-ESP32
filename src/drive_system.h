@@ -23,7 +23,7 @@ extern uint64_t e_count;
 
 /* --- Timing Constants --- */
 
-#define DRVSYS_FOC_PERIOD_US 250 //us -> 5kHz
+#define DRVSYS_FOC_PERIOD_US 200 //us -> 5kHz
 #define DRVSYS_PROCESS_MOTOR_ENCODER_PERIOD_US 250 //us -> 4kHz
 #define DRVSYS_CONTROL_ACC_PERIOD_US 500 //us //2kHz
 #define DRVSYS_CONTROL_VEL_PERIOD_US 1666 //us //600Hz

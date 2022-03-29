@@ -6,9 +6,14 @@
 #include <TMCStepper.h>
 #include <joint_control_global_def.h>
 
-#define FOC_SINE_LOOKUP_RES 1.25    
-#define FOC_SINE_LOOKUP_SIZE 72
-#define FOC_SINE_LOOKUP_DIVISOR 0.8 // 1/2°
+#define FOC_SINE_LOOKUP_RES  0.0219726
+#define FOC_SINE_LOOKUP_SIZE 4096
+#define FOC_SINE_LOOKUP_DIVISOR 2.84444 // 1/2°
+#define FOC_SINE_LOOKUP_DIVISOR_disc 1 // 1/2°
+
+#define EMPIRIC_PHASE_ANGLE_OFFSET 15703 //
+
+#define FOC_CONSTANT 0.069173 // 255/8192*1/0.45 --- 0.45Nm = holding torque
 
 #define FOC_DEBUG
 
@@ -37,6 +42,8 @@ public:
     void set_target_torque(float torque_target);
     void _test_sineLookup(float input);
 
+    long microseconds = 0;
+
 private:
     union xdirect_tmc
     {
@@ -49,7 +56,7 @@ private:
         } values;
     }direct;
 
-    float phase_null_angle = 0;
+    uint32_t phase_null_angle = 0;
     float inverse_torque_constant = 1.0 / torque_motor_constant;
 
     float current_scale_constant = 255 * 1000 / max_current_mA;
@@ -59,9 +66,15 @@ private:
     SemaphoreHandle_t foc_spi_mutex;
 
     void init_sine_quart();
-    float sine_lookup(float val);
+    double sine_lookup(double val);
+    int32_t sine_lookup_(int32_t val);
 
-    float sineQuart[FOC_SINE_LOOKUP_SIZE] = { 0.0 };
+    int32_t predictive_angle_shift = 0;
+
+    double sineQuart[FOC_SINE_LOOKUP_SIZE] = { 0.0 };
+    int32_t sineQuart_14bit[FOC_SINE_LOOKUP_SIZE] = { 0 };
+
+    const double foc_output_const = FOC_CONSTANT;
 };
 
 #endif // ! FOC_CONTROLLER_H

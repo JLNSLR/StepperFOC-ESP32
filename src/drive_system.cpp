@@ -76,7 +76,7 @@ void  drvSys_start() {
         xTaskCreatePinnedToCore(
             _drvSys_foc_controller_task,   // function name
             "FoC-Controller-Task", // task name
-            1000,      // Stack size (bytes)
+            3000,      // Stack size (bytes)
             NULL,      // task parameters
             foc_prio,         // task priority
             &drvSys_foc_th,
@@ -184,7 +184,8 @@ void _drvSys_process_motor_encoder_task(void* parameters) {
         if (encoder_processing_thread_notification) {
             if (xSemaphoreTake(drvSys_mutex_joint_angle_buffer, 10 / portTICK_PERIOD_MS) == pdTRUE) {
 
-                drvSys_position_buffer.unshift(drvSys_motor_encoder.get_angle_filtered_deg());
+                //drvSys_position_buffer.unshift(drvSys_motor_encoder.get_angle_filtered_deg());
+                drvSys_position_buffer.unshift(drvSys_motor_encoder.get_motor_angle_deg());
                 xSemaphoreGive(drvSys_mutex_joint_angle_buffer);
 
             }

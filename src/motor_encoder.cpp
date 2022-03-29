@@ -38,6 +38,10 @@ float MotorEncoder::get_angle_deg()
 
 }
 
+double MotorEncoder::get_motor_angle_rad() {
+    return double(this->_current_angle_raw) * M_ENC_RAW2RAD;
+}
+
 float MotorEncoder::get_angle_filtered_deg() {
     pos_input_filter_m.input = get_angle_deg();
     pos_input_filter_m.compute();
@@ -57,6 +61,15 @@ uint32_t MotorEncoder::read_angle_raw()
 
     _previous_angle_raw = _current_angle_raw;
     xSemaphoreTake(spi_mutex, portMAX_DELAY);
+    /*
+    uint32_t angle_raw_1 = magnetic_encoder->getRotationPos();
+    uint32_t angle_raw_2 = magnetic_encoder->getRotationPos();
+    uint32_t angle_raw_3 = magnetic_encoder->getRotationPos();
+    uint32_t angle_raw_4 = magnetic_encoder->getRotationPos();
+    uint32_t angle_raw_5 = magnetic_encoder->getRotationPos();
+
+    uint32_t angle_raw = (angle_raw_1 + angle_raw_2 + angle_raw_3 + angle_raw_4 + angle_raw_5) / 5;
+    */
     uint32_t angle_raw = magnetic_encoder->getRotationPos();
     xSemaphoreGive(spi_mutex);
     _current_angle_raw = angle_raw;
