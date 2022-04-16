@@ -1,18 +1,34 @@
 #ifndef JOINT_CONTROL_GLOB_DEF_H
 #define JOINT_CONTROL_GLOB_DEF_H
 
-#define EN_PIN 15  // Enable
-#define DIR_PIN 4  // Direction
-#define STEP_PIN 2 // Step
 
-#define R_SENSE 0.075f // Match to your driver                         \
-                       // SilentStepStick series use 0.11              \
-                       // UltiMachine Einsy and Archim2 boards use 0.2 \
-                       // Panucatt BSD2660 uses 0.1                    \
-                       // Watterott TMC5160 uses 0.075
-
+// SPI CS PINs
 #define CS_ENCODER 16
 #define CS_TMC 17
+#define CS_JOINT_ENCODER 4
+
+// Function Pins
+#define HALL_SENSOR_PIN 36
+#define RGB_LED_PIN 33
+#define FAN_PWM_PIN 15
+
+//I2C
+#define SDA 21
+#define SCL 22
+
+//TMC Related
+#define TMC_DIAG1 37
+#define TMC_DIAG0 36
+#define TMC_STEP 25
+#define TMC_DIR 26
+#define TMC_DC_EN 32
+#define TMC_DC0 27
+#define TMC_DC_IN 14
+
+//CAN
+#define CAN_RX 35
+#define CAN_TC 5
+
 
 #include <FreeRTOS.h>
 

@@ -9,6 +9,8 @@
 #include <CircularBuffer.h>
 #include <AS5048A.h>
 #include <TMCStepper.h>
+#include <differentiator.h>
+#include <PID/PIDController.h>
 
 #define DEG2RAD 0.01745329251994329576923690768489
 #define RAD2DEG 57.295779513082320876798154814105
@@ -25,9 +27,11 @@ extern uint64_t e_count;
 
 #define DRVSYS_FOC_PERIOD_US 200 //us -> 5kHz
 #define DRVSYS_PROCESS_MOTOR_ENCODER_PERIOD_US 250 //us -> 4kHz
+#define DRVSYS_PROCESS_MOTOR_ENCODER_FREQU 4000 //Hz
 #define DRVSYS_CONTROL_ACC_PERIOD_US 500 //us //2kHz
-#define DRVSYS_CONTROL_VEL_PERIOD_US 1666 //us //600Hz
-#define DRVSYS_CONTROL_POS_PERIOD_MS 2 //ms //200Hz
+#define DRVSYS_CONTROL_VEL_PERIOD_US 500 //us //600Hz
+#define DRVSYS_CONTROL_VEL_FREQ 2000
+#define DRVSYS_CONTROL_POS_PERIOD_MS 2 //ms //500Hz
 
 /* --- Hardware-Timer-Constants --- */
 #define DRVSYS_TIMER_PRESCALER_DIV 80 // with 80MHz Clock, makes the timer tick every 1us
@@ -35,9 +39,9 @@ extern uint64_t e_count;
 
 
 /*--- Drive Constants --- */
-#define DRVSYS_PHASE_CURRENT_MAX_mA 1500
-#define DRVSYS_TRANSMISSION_RATIO 2
-#define DRVSYS_TORQUE_CONSTANT 0.45
+#define DRVSYS_PHASE_CURRENT_MAX_mA 2800
+#define DRVSYS_TRANSMISSION_RATIO 50
+#define DRVSYS_TORQUE_CONSTANT 1.92
 
 
 /* DEBUG COMMAND */
@@ -55,6 +59,7 @@ struct drvSys_State_t {
 };
 
 
+
 /* ##########################################################################
 ################### ---- Interface Functions ---- ###########################
 ############################################################################*/
@@ -66,12 +71,11 @@ drvSys_State_t drvSys_get_current_state();
 
 
 
-
-
 /* --- Internal Drive System functions --- */
 
 void drvSys_setupDriver();
 void drvSys_setupInterrupts();
+void drvSys_setupControllers();
 
 /* Interrupt Handler */
 
@@ -95,14 +99,24 @@ void _drvSys_torque_controller_task(void* parameters);
 
 void _drvSys_debug_print_position_task(void* parameters);
 
+void _drvSys_read_serial_commands_task(void* parameters);
 
+/* Interface Functions */
 
+void drvSys_set_target_torque(float torque);
 
+void drvSys_set_target_acceleration(float acc);
 
+void drvSys_set_target_velocity(float vel);
 
+void drvSys_set_target_pos(float angle);
 
+void drvSys_test_signal_task(void* parameters);
 
+/* internal Funvtions */
 
+void drvSys_parse_ASCI_command(String asci_command);
+void drvSys_parse_ASCI_command(char* asci_command, int length);
 
 
 

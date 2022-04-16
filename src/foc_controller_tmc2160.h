@@ -5,15 +5,14 @@
 #include <FreeRTOS.h>
 #include <TMCStepper.h>
 #include <joint_control_global_def.h>
+#include <drive_system_calibration.h>
 
 #define FOC_SINE_LOOKUP_RES  0.0219726
 #define FOC_SINE_LOOKUP_SIZE 4096
 #define FOC_SINE_LOOKUP_DIVISOR 2.84444 // 1/2°
 #define FOC_SINE_LOOKUP_DIVISOR_disc 1 // 1/2°
 
-#define EMPIRIC_PHASE_ANGLE_OFFSET 15703 //
-
-#define FOC_CONSTANT 0.069173 // 255/8192*1/0.45 --- 0.45Nm = holding torque
+#define FOC_EMPIRIC_PHASE_ANGLE_OFFSET 15710//15715 //
 
 #define FOC_DEBUG
 
@@ -23,23 +22,27 @@ class FOCController
 public:
     FOCController();
     FOCController(MotorEncoder* m_encoder, TMC2160Stepper* driver, int16_t max_current_mA,
-        float torque_motor_constant, SemaphoreHandle_t SPI_mutex);
+        float max_torque, SemaphoreHandle_t SPI_mutex);
 
     void setup_driver();
-    void calibrate_phase_angle(); // blocking function should only be called
+    void calibrate_phase_angle(uint32_t phase_angle_null = 0); // blocking function should only be called during setup phase
 
     void foc_control();
 
     MotorEncoder* motor_encoder;
     TMC2160Stepper* driver;
     int16_t max_current_mA;
-    float torque_motor_constant = 0.45;
+    float max_torque = 0;
+    int N_pole_pairs = 50;
 
-    float target_torque = 0.3;
+
+    float target_torque = 0;
 
     bool calibrated = false;
+    int32_t phase_offset_correct = 0;
 
     void set_target_torque(float torque_target);
+    void set_target_torque_9bit(uint16_t torque_target);
     void _test_sineLookup(float input);
 
     long microseconds = 0;
@@ -57,24 +60,20 @@ private:
     }direct;
 
     uint32_t phase_null_angle = 0;
-    float inverse_torque_constant = 1.0 / torque_motor_constant;
-
-    float current_scale_constant = 255 * 1000 / max_current_mA;
-
 
     portMUX_TYPE foc_torque_command_spinlock;
     SemaphoreHandle_t foc_spi_mutex;
 
     void init_sine_quart();
-    double sine_lookup(double val);
-    int32_t sine_lookup_(int32_t val);
+    int32_t sine_lookup(int32_t val);
 
     int32_t predictive_angle_shift = 0;
 
-    double sineQuart[FOC_SINE_LOOKUP_SIZE] = { 0.0 };
     int32_t sineQuart_14bit[FOC_SINE_LOOKUP_SIZE] = { 0 };
 
-    const double foc_output_const = FOC_CONSTANT;
+    double foc_output_const = FOC_CONSTANT;
+
+
 };
 
 #endif // ! FOC_CONTROLLER_H
