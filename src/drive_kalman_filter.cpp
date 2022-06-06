@@ -16,9 +16,9 @@ DriveKalmanFilter::DriveKalmanFilter(float delta_t, float transmission) {
     system_matrix_A.Fill(0);
     // angle
     system_matrix_A(0, 0) = 1.0;
-    systen_matrix_A(0, 1) = delta_t;
+    system_matrix_A(0, 1) = delta_t;
     //vel
-    systen_matrix_A(1, 1) = 1.0;
+    system_matrix_A(1, 1) = 1.0;
     system_matrix_A(1, 2) = delta_t;
     //acc dynamics
     system_matrix_A(2, 1) = -x_initial(kalman_visc_fric_coef) / x_initial(kalman_inertia);
@@ -106,9 +106,9 @@ void DriveKalmanFilter::prediction_step() {
     x_pred(kalman_angle) = x_current(kalman_angle) + delta_t * x_current(kalman_vel);
     x_pred(kalman_vel) = x_current(kalman_vel) + delta_t * x_current(kalman_acc);
 
-    x_pred(kalman_acc) = (1 / x_current(kalman_inertia)) * (input_torque * transmission - get_total_friction_estimate() - get_load_torque())
-        x_pred(kalman_load_torque) = x_current(kalman_load_torque);
-    x_pred(kalman_motor_angle) = x_current(kalman_angle) / N - x_current(kalman_delta_angle);
+    x_pred(kalman_acc) = (1 / x_current(kalman_inertia)) * (input_torque * transmission - get_total_friction_estimate() - get_load_torque());
+    x_pred(kalman_load_torque) = x_current(kalman_load_torque);
+    x_pred(kalman_motor_angle) = x_current(kalman_angle) / transmission - x_current(kalman_delta_angle);
 
 
     // Update Error Covariance Matrix
@@ -128,14 +128,15 @@ void DriveKalmanFilter::prediction_step() {
 void DriveKalmanFilter::correction_step(BLA::Matrix<10> y_meas, BLA::Matrix<10, 10> C_output_matrix, BLA::Matrix<10, 10> measurement_noise_matrix) {
 
     //Calculate Kalman Gain
-    kalman_gain = error_covariance_matrix * ~C_output_matrix * BLA::Invert(C_output_matrix * error_covariance_matrix * ~C_output + measurement_noise_matrix);
+    kalman_gain = error_covariance_matrix * ~C_output_matrix * BLA::Inverse(C_output_matrix * error_covariance_matrix * ~C_output_matrix + measurement_noise_matrix);
     //Calculate corrected state vector
     x_corrected = x_current + kalman_gain * (y_meas - C_output_matrix * x_current);
     //update error covariance matrix
     error_covariance_matrix = (identity_mat + kalman_gain * C_output_matrix) * error_covariance_matrix;
+
 };
 
-void DriveKalmanFilter::add_joint_encoder_measurement(float angle_deg, float angle_vel_deg, float angle_acc_deg, float delta_angle = 0.0) {
+void DriveKalmanFilter::add_joint_encoder_measurement(float angle_deg, float angle_vel_deg, float angle_acc_deg, float delta_angle) {
     BLA::Matrix<10> y_meas;
     y_meas.Fill(0);
     y_meas(kalman_angle) = angle_deg * DEG2RAD;
@@ -208,8 +209,10 @@ float DriveKalmanFilter::get_total_friction_estimate() {
 };
 
 void DriveKalmanFilter::scale_system_noise_matrix(float scale_factor) {
-    system_noise_matrix = scale_factor * system_noise_matrix;
-}
+    for (int i = 0; i < 10; i++) {
+        system_noise_matrix(i, i) = scale_factor * system_noise_matrix(i, i);
+    }
+};
 
 
 /* Getter Functions */

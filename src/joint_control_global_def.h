@@ -2,6 +2,8 @@
 #define JOINT_CONTROL_GLOB_DEF_H
 
 
+#define JOINT_ID 0
+
 // SPI CS PINs
 #define CS_ENCODER 16
 #define CS_TMC 17
@@ -25,9 +27,11 @@
 #define TMC_DC0 27
 #define TMC_DC_IN 14
 
+#define R_SENSE 0.075f
+
 //CAN
 #define CAN_RX 35
-#define CAN_TC 5
+#define CAN_TX 5
 
 
 #include <FreeRTOS.h>

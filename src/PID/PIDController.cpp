@@ -60,6 +60,8 @@ void PIDController::compute()
     if (outputFilter)
     {
         output = output * output_exp_filter_alpha + prev_output * (1 - output_exp_filter_alpha);
+
+        prev_output = output;
     }
 
     // Clamp output against windup
@@ -208,6 +210,10 @@ void PIDController::setOutputFilter(bool isActive, float alpha)
 {
     this->outputFilter = isActive;
     this->output_exp_filter_alpha = alpha;
+}
+
+void PIDController::setErrorDeadBand(float const deadband) {
+    this->errorDeadBand = deadband;
 }
 
 bool PIDController::getMode()

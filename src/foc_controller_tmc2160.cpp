@@ -1,4 +1,5 @@
 #include <foc_controller_tmc2160.h>
+#define EN_PIN 15  // Enable
 
 FOCController::FOCController() {
     init_sine_quart();
@@ -79,10 +80,10 @@ void FOCController::calibrate_phase_angle(uint32_t phase_angle_null) {
         uint32_t null_angle_temp = 0.0;
         int count = 100000;
 
+        xSemaphoreGive(foc_spi_mutex);
         for (int i = 0; i < count; i++) {
             null_angle_temp = null_angle_temp + motor_encoder->read_angle_raw();
-            xSemaphoreTake(foc_spi_mutex, portMAX_DELAY);
-            xSemaphoreGive(foc_spi_mutex);
+
         }
 
         null_angle_temp = null_angle_temp / count;
@@ -135,7 +136,10 @@ void FOCController::foc_control() {
     static const int N = N_pole_pairs;
 
     // obtain current motor angle
-    motor_encoder->read_angle_raw();
+
+    input_averaging = true;
+    motor_encoder->read_angle_raw(input_averaging);
+    //Serial.println(motor_encoder->_current_angle_raw);
 
     // calculate angle_shift
     int32_t angle_diff = int32_t(motor_encoder->_current_angle_raw) - int32_t(motor_encoder->_previous_angle_raw);
@@ -148,7 +152,7 @@ void FOCController::foc_control() {
     angle_diff_prev = angle_diff_filtered;
 
     // anticipate phase shift based on previous shift
-    int32_t empiric_phase_shift = angle_diff_filtered * 2.0;
+    int32_t empiric_phase_shift = angle_diff_filtered * empiric_phase_shift_factor;
 
     // calculate desired phase currents
     int16_t i_a_simp = double(-foc_output_const * target_torque * sine_lookup(N * int32_t(int32_t(motor_encoder->_current_angle_raw) - int32_t(phase_null_angle + phase_offset_correct) + empiric_phase_shift)));
@@ -167,7 +171,7 @@ void FOCController::foc_control() {
 }
 
 
-void FOCController::set_target_torque_9bit(uint16_t torque_target) {
+void FOCController::set_target_torque_9bit(int16_t torque_target) {
     static const float inv_max_torque = 1.0 / max_torque;
     if (torque_target > 255) {
         torque_target = 255;
@@ -176,7 +180,7 @@ void FOCController::set_target_torque_9bit(uint16_t torque_target) {
         torque_target = -255;
     }
     portENTER_CRITICAL(&foc_torque_command_spinlock);
-    this->target_torque = float(torque_target / 255) * inv_max_torque;
+    this->target_torque = float(torque_target / 255.0) * inv_max_torque;
     portEXIT_CRITICAL(&foc_torque_command_spinlock);
 }
 
@@ -191,6 +195,10 @@ void FOCController::init_sine_quart() {
         //Serial.println(i);
 
     }
+}
+
+void FOCController::set_empiric_phase_shift_factor(float factor) {
+    this->empiric_phase_shift_factor = factor;
 }
 
 

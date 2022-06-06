@@ -12,7 +12,7 @@
 #define FOC_SINE_LOOKUP_DIVISOR 2.84444 // 1/2°
 #define FOC_SINE_LOOKUP_DIVISOR_disc 1 // 1/2°
 
-#define FOC_EMPIRIC_PHASE_ANGLE_OFFSET 15710//15715 //
+//#define FOC_EMPIRIC_PHASE_ANGLE_OFFSET 15710//15715 //
 
 #define FOC_DEBUG
 
@@ -35,6 +35,8 @@ public:
     float max_torque = 0;
     int N_pole_pairs = 50;
 
+    void set_empiric_phase_shift_factor(float factor);
+
 
     float target_torque = 0;
 
@@ -42,10 +44,13 @@ public:
     int32_t phase_offset_correct = 0;
 
     void set_target_torque(float torque_target);
-    void set_target_torque_9bit(uint16_t torque_target);
+    void set_target_torque_9bit(int16_t torque_target);
     void _test_sineLookup(float input);
 
     long microseconds = 0;
+    bool  input_averaging = true;
+
+    uint32_t phase_null_angle = 0;
 
 private:
     union xdirect_tmc
@@ -59,8 +64,6 @@ private:
         } values;
     }direct;
 
-    uint32_t phase_null_angle = 0;
-
     portMUX_TYPE foc_torque_command_spinlock;
     SemaphoreHandle_t foc_spi_mutex;
 
@@ -71,7 +74,8 @@ private:
 
     int32_t sineQuart_14bit[FOC_SINE_LOOKUP_SIZE] = { 0 };
 
-    double foc_output_const = FOC_CONSTANT;
+    double foc_output_const;
+    float empiric_phase_shift_factor = 2.25;
 
 
 };

@@ -21,6 +21,9 @@ void MotorEncoder::init_encoder()
     Serial.println("Initializing Motor Encoder...");
     xSemaphoreTake(spi_mutex, portMAX_DELAY);
     magnetic_encoder->init();
+    magnetic_encoder->printErrors();
+    magnetic_encoder->printState();
+    Serial.println(magnetic_encoder->getErrors());
     this->_current_angle_raw = magnetic_encoder->getRotationPos();
     xSemaphoreGive(spi_mutex);
     Serial.println("Succesfully initialized Motor Encoder...");
@@ -89,12 +92,36 @@ float MotorEncoder::get_angle_rad()
     return angle_rad;
 }
 
-uint32_t MotorEncoder::read_angle_raw()
+uint32_t MotorEncoder::read_angle_raw(bool averaging)
 {
 
     _previous_angle_raw = _current_angle_raw;
+    uint32_t angle_raw;
     xSemaphoreTake(spi_mutex, portMAX_DELAY);
-    uint32_t angle_raw = magnetic_encoder->getRotationPos();
+    if (averaging) {
+
+        uint32_t angle_raw_array[3];
+        angle_raw_array[0] = magnetic_encoder->getRotationPos();
+        angle_raw_array[1] = magnetic_encoder->getRotationPos();
+        angle_raw_array[2] = magnetic_encoder->getRotationPos();
+
+
+        //angle_raw = (angle_raw_array[0] + angle_raw_array[1] + angle_raw_array[2] + angle_raw_array[3]) / 4;
+
+        for (int i = 0; i < 3; i++) {
+            uint32_t val = angle_raw_array[i];
+            if (val > angle_raw_array[i + 1]) {
+                angle_raw_array[i] = angle_raw_array[i + 1];
+                angle_raw_array[i + 1] = val;
+            }
+        }
+
+        angle_raw = angle_raw_array[1];
+
+    }
+    else {
+        angle_raw = magnetic_encoder->getRotationPos();
+    }
     xSemaphoreGive(spi_mutex);
     _current_angle_raw = angle_raw;
 

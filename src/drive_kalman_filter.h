@@ -15,15 +15,15 @@ public:
     DriveKalmanFilter(float delta_t, float transmission);
 
     void prediction_step();
-    void correction_step();
+    void correction_step(BLA::Matrix<10> y_meas, BLA::Matrix<10, 10> C_output_matrix, BLA::Matrix<10, 10> measurement_noise_matrix);
 
-    void add_motor_encoder_measurement(float angle_deg, float angle_vel_deg, float angle_acc_deg);
-    void add_joint_encoder_measurement(float angle_deg);
-    void add_torque_measurement();
+    void add_motor_encoder_measurement(float angle_deg, float angle_vel_deg, float angle_acc_deg, float mootor_angle = 0.0);
+    void add_joint_encoder_measurement(float angle_deg, float angle_vel_deg, float angle_acc_deg, float delta_angle = 0.0);
+    void add_torque_measurement(float torque);
 
     void set_drive_input(float motor_torque);
 
-    void get_total_friction_estimate();
+    float get_total_friction_estimate();
 
     float get_load_torque();
     float get_delta_angle();
@@ -100,7 +100,7 @@ private:
 
     const float stiction_velocity_limit = 0.1 * DEG2RAD; // deg/s
 
-    BLA::Matrix(10, 10) identity_mat;
+    BLA::Matrix<10, 10> identity_mat;
 
 
 

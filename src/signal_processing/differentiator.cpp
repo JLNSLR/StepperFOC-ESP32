@@ -1,4 +1,4 @@
-#include <differentiator.h>
+#include <signal_processing/differentiator.h>
 #include <Arduino.h>
 
 Differentiator::Differentiator() {
@@ -70,7 +70,19 @@ void Differentiator::setInput(float input)
 void Differentiator::differentiateRobustly() {
     static const double divisor = 1.0 / ((timestep) * 8.0);
 
-    output_dif1 = (2 * (x_t_array[1] - x_t_array[3]) + (x_t_array[0] - x_t_array[4])) * divisor;
+    float output_dif1_temp = (2 * (x_t_array[1] - x_t_array[3]) + (x_t_array[0] - x_t_array[4])) * divisor;
+
+    float sigma = 0.01;
+    output_dif1_temp = output_dif1_temp * sigma + (1.0 - sigma) * output_dif1;
+
+    if (abs(output_dif1_temp) > 360) {
+        return;
+    }
+    else {
+        output_dif1 = output_dif1_temp;
+    }
+
+
 }
 
 void Differentiator::differentriateRobustlyTwice() {

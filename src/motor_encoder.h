@@ -13,7 +13,7 @@
 #define RAD2DEG 57.295779513082320876798154814105
 
 
-#include <IIRFilter.h>
+#include <signal_processing/IIRFilter.h>
 #include <AS5048A.h>
 #include <Arduino.h>
 #include <FreeRTOS.h>
@@ -26,7 +26,7 @@ public:
     MotorEncoder(AS5048A* encoder, float n_transmission, SemaphoreHandle_t SPI_mutex);
 
     void init_encoder();
-    uint32_t read_angle_raw(); //only function that calls the Sensor!
+    uint32_t read_angle_raw(bool averaging = false); //only function that calls the Sensor!
     float get_angle_deg();
     float get_angle_rad();
     float get_motor_angle_deg();
@@ -61,7 +61,7 @@ private:
     int32_t _zero_angle_raw = 0;
 
     int32_t _upper_rollover_detect_limit = 10000;
-    int32_t _lower_rollover_detect_limit = 5000;
+    int32_t _lower_rollover_detect_limit = 7000;
 
     portMUX_TYPE pos_input_data_spinLock;
     SemaphoreHandle_t spi_mutex;
