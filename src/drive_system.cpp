@@ -15,7 +15,7 @@ SemaphoreHandle_t drvSys_mutex_joint_position = xSemaphoreCreateBinary();
 SemaphoreHandle_t drvSys_mutex_joint_vel = xSemaphoreCreateBinary();
 SemaphoreHandle_t drvSys_mutex_joint_acc = xSemaphoreCreateBinary();;
 
-SemaphoreHandle_t drvSys_mutex_joint_torque_sensor = xSemaphoreCreateBinary();
+SemaphoreHandle_t drvSys_mutex_joint_torque = xSemaphoreCreateBinary();
 
 SemaphoreHandle_t drvSys_mutex_torque_target = xSemaphoreCreateBinary();
 SemaphoreHandle_t drvSys_mutex_motor_commanded_torque = xSemaphoreCreateBinary();
@@ -193,9 +193,9 @@ drvSys_driveState drvSys_get_drive_state() {
     state.joint_acc = drvSys_motor_acc;
     xSemaphoreGive(drvSys_mutex_motor_acc);
 
-    xSemaphoreTake(drvSys_mutex_joint_torque_sensor, portMAX_DELAY);
+    xSemaphoreTake(drvSys_mutex_joint_torque, portMAX_DELAY);
     state.joint_torque = drvSys_joint_torque;
-    xSemaphoreGive(drvSys_mutex_joint_torque_sensor);
+    xSemaphoreGive(drvSys_mutex_joint_torque);
 
     state.motor_torque = drvSys_m_torque_commanded;
 
@@ -220,7 +220,7 @@ void _drvSys_setupDriver() {
 
     drvSys_motor_encoder.init_encoder();
     drvSys_foc_controller.setup_driver();
-    drvSys_foc_controller.calibrate_phase_angle(FOC_EMPIRIC_PHASE_ANGLE_OFFSET);
+    drvSys_foc_controller.calibrate_phase_angle(7548);
 
 
 };
@@ -370,7 +370,7 @@ void  drvSys_start_foc_processing() {
     xSemaphoreGive(drvSys_mutex_joint_vel);
     xSemaphoreGive(drvSys_mutex_motor_acc);
     xSemaphoreGive(drvSys_mutex_motor_vel);
-    xSemaphoreGive(drvSys_mutex_joint_torque_sensor);
+    xSemaphoreGive(drvSys_mutex_joint_torque);
     xSemaphoreGive(drvSys_mutex_motor_commanded_torque);
     xSemaphoreGive(drvSys_mutex_torque_target);
 
@@ -813,9 +813,9 @@ void _drvSys_admittance_controller_task(void* parameters) {
         float virtual_spring = drvSys_parameter_config.admittance_gains.virtual_spring;
         float virtual_damping = drvSys_parameter_config.admittance_gains.virtual_damping;
 
-        xSemaphoreTake(drvSys_mutex_joint_torque_sensor, portMAX_DELAY);
+        xSemaphoreTake(drvSys_mutex_joint_torque, portMAX_DELAY);
         float current_joint_torque = drvSys_joint_torque;
-        xSemaphoreGive(drvSys_mutex_joint_torque_sensor);
+        xSemaphoreGive(drvSys_mutex_joint_torque);
 
         float desired_joint_torque = drvSys_joint_torque_ref;
 

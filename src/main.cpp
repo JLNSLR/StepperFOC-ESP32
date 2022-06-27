@@ -32,14 +32,14 @@ void setup()
 
   jCtrl_asci_start_interface();
 
-  drvSys_start_motion_control(cascade_position_control);
+  //drvSys_start_motion_control(cascade_position_control);
 
   //jCtrl_asci_debug_output_start(true, false, false, false, false, false);
 
 
   //drvSys_start_debug_output();
   // Calibration of FOC
-  //drvSys_calibrate_FOC();
+  drvSys_calibrate_FOC();
 
 
 
